@@ -1,7 +1,5 @@
-# Hallgató segédlet
-
-## Adatbázis létrehozása
-### Inicializálás
+# Adatbázis létrehozása
+## Inicializálás
 ```sql
 drop database if exists konyvtar;
 
@@ -15,7 +13,7 @@ use konyvtar;
 * A második utasítás létrehozza az adatbázist. A magyar ékezetek használata miatt beállítjuk az UTF8 kódolást. 
 * A harmadik utasítás biztosítja, hogy a további parancsok ebben az adatbázisban legyenek végrehajtva. 
 
-### Könyv tábla
+## Könyv tábla
 
 ```sql
 create table konyv(
@@ -45,7 +43,7 @@ insert into konyv (isbn, cim, szerzo, kiado, megjelenesev) values ('1449392776',
 insert into konyv (isbn, cim, szerzo, kiado, megjelenesev	) values ('1449392776', 'Programming PHP: Creating Dynamic Web Pages, 3. példány', 'Kevin Tatroe, Peter MacIntyre, Rasmus Lerdorf', 'O\'Reilly', 2013);
 ```
 
-### Tag tábla
+## Tag tábla
 Az alábbi kódrészlet létrehozza a tag táblát és elhelyez benne néhány teszt adatot. 
 
 ```sql
@@ -61,7 +59,7 @@ insert into tag (nev, email, telefon) values ('Nagy Béla', 'nagy.bela@konyvtar.
 insert into tag (nev, email, telefon) values ('Mészáros Tamás', 'meszaros.tamas@konyvtar.hu', '32345478');
 ```
 
-### Kölcsönzések
+## Kölcsönzések
 ```sql
 create table kolcsonzes(
 	id int primary key auto_increment,

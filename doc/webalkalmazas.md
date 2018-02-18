@@ -262,6 +262,8 @@ A másik segédfüggvény lezárja a paraméterként megkapott adatbázis kapcso
 
 ## Books.php
 
+### Listázás
+
 A könyv tábla tartalmát a `books.php` oldalon jelenítjük meg: 
 
 ```html
@@ -336,6 +338,144 @@ Nézzük végig az oldal működését részletesen:
         * `table-bordered`: a táblázat szegélyei legyenek láthatók
 
 
+### Új könyv létrehozása
+
+Egészítsük ki az oldalt egy form-mal, amellyel új könyvet hozhatunk létre! Az oldal alján jelenítünk meg beviteli mezőket, amelyek az új könyv címét, szerzőjét és egyéb adatait kérik be. Legyen továbbá egy gomb, amivel ez a tartalmat elküldjük és létrehozzuk a könyvet. 
+```html
+<form method="post" action="">
+    <div class="card">
+        <div class="card-header">
+            Új könyv hozzáadása
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label for="isbn">ISBN</label>
+                <input class="form-control" name="isbn" id="isbn" type="text" />
+            </div>
+            <div class="form-group">
+                <label for="cim">Cím</label>
+                <input required class="form-control" name="cim" id="cim" type="text"  />
+            </div>
+            <div class="form-group">
+                <label for="szerzo">Szerző</label>
+                <input class="form-control" name="szerzo" id="szerzo" type="text" />
+            </div>
+            <div class="form-group">
+                <label for="kiado">Kiadó</label>
+                <input class="form-control" name="kiado" id="kiado" type="text"  />
+            </div>
+            <div class="form-group">
+                <label for="megjelenesev">Megjelenés éve</label>
+                <input class="form-control" name="megjelenesev" id="megjelenesev" type="number" />
+            </div>
+        </div>
+        <div class="card-footer">
+            <input class="btn btn-success" name="create" type="submit" value="Létrehozás" />
+        </div>
+    </div>
+    </form>
+```
+
+* A form egy űrlapot jelenít meg. Az űrlapban a különböző `input` elemek adatokat tartalmaznak. 
+* A [`card`](https://getbootstrap.com/docs/4.0/components/card/) egy "doboz" szerű elemet jelent, aminek van fejléce, törzse és lábrésze. Csak a design miatt használjuk.
+* Szintén csak a design miatt használjuk a `form-group` és `form-control` css osztályokat. 
 
 
+Amikor az űrlapot elküldjük a szervernek, akkor a megfelelő beviteli mezők tartalma elmegy a kérésben a szervernek, amely ezt fel tudja dolgozni. Az egyes mezőket a az `input` elemek `name` attribútuma azonosítja. Amennyiben kiteszünk egy `submit` típusú `input` elemet, akkor megjelenik egy gomb. Ezt a gombot megnyomva küldi ez a böngésző a form tartalmát. Az elküldés tehát azt jelenti, hogy a böngésző létrehoz egy új HTTP kérést, ezt elküldi a szervernek és a visszatérési értékként kapott HTML oldalt újra megjeleníti. A kérésben pedig benne lesz a form aktuális tartalma. 
 
+A `form` elem attribútumaiban megadható, hogy a szerver melyik erőforrásához küldjük a kérését (`action` attribútum). Amennyiben nem adunk meg semmit, vagy üresen hagyjuk, akkor az aktuális oldalhoz küljük, vagyis jelen esetben a `books.php`-hoz. A `method` attribútum határozza meg, hogy milyen HTTP kérést küldünk (például POST, vagy GET típusút). GET esetében az URL-ben, míg POST esetében a kérés törzsében lesz elküldve az űrlap tartalma. 
+
+Jelen esetben például a következő HTTP POST kérés mehet el a szervernek: 
+```
+POST /info2/library/books.php HTTP/1.1
+Host: localhost
+Connection: keep-alive
+Content-Length: 136
+Cache-Control: max-age=0
+Origin: http://localhost
+Upgrade-Insecure-Requests: 1
+Content-Type: application/x-www-form-urlencoded
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+DNT: 1
+Referer: http://localhost/info2/library/books.php
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+
+isbn=%C3%BAj+isbn&cim=%C3%BAj+c%C3%ADm&szerzo=%C3%BAj+szerz%C5%91&kiado=%C3%BAj+kiad%C3%B3&megjelenesev=2018&create=L%C3%A9trehoz%C3%A1s
+```
+Jól látható, hogy a kérés POST típusú, a books.php-nak megy és a fejléc beállításai után tartlmaz egy tözset, amelyben URL kódolva láthatók az űrlapba beírt értékek. A fenti példában a az isbn hez "új isbn", a címhez "új cím" stb. értékeket adtunk meg. Az URL kódolás az ékezetetket és a szóközöket helyettesíti speciális karakterkódokkal, de ettől eltekintve a következő formátumnak felel meg: `isbn=<isbn értéke>&cim=<cim értéke>&...`.
+
+Amennyiben a fenti kódot fel akarjuk dolgozni a szerveren nincs más dolgunk, mint megvizsgálni, hogy a fenti paramétereket tartalmazza-e a kérés. Ne felejtsük el, hogy amikor egyszerűen a menüben található linket követve jutunk el a `books.php` oldalra, akkor a böngésző egy egyszerű HTTP GET kérést küld, amiben nincsenek további paraméterek. Amikor kitöltjük az oldalon az űrlapot, akkor ugyanúgy egy HTTP kérés megy a `books.php`-nak, de itt már POST típusú a kérés és az űrlapnak megfelelő paraméterek szerepelnek. Tehát mindenképpen le kell generálnunk a könyvek listáját, de amennyiben egy űrlapot küldtünk el, akkor létre is kell hoznunk egy új könyvet. 
+
+Illesszük be az alábbi kódot a oldal tetejére!
+```html
+<?php
+include 'library.php';
+$link = getDb(); 
+
+$created = false;
+if (isset($_POST['create'])) {
+    $cim = mysqli_real_escape_string($link, $_POST['cim']);
+    $szerzo = mysqli_real_escape_string($link, $_POST['szerzo']);
+    $kiado = mysqli_real_escape_string($link, $_POST['kiado']);
+    $isbn = mysqli_real_escape_string($link, $_POST['isbn']);
+    $megjelenesev = mysqli_real_escape_string($link, $_POST['megjelenesev']);
+
+    $createQuery = sprintf("INSERT INTO konyv(cim, szerzo, kiado, isbn, megjelenesev) VALUES ('%s', '%s', '%s', '%s', %s)",
+        $cim,
+        $szerzo,
+        $kiado,
+        $isbn,
+        $megjelenesev
+    );
+    mysqli_query($link, $createQuery) or die(mysqli_error($link));
+    $created = true;
+}
+?>
+```
+Az űrlapban az elküldő gomb `name` attribútumát `create` értékre állítottuk be, ezért amikor elküldjük az oldalt, ez szerepelni fog a paraméterek között. A POST kérés paramétereit a `$_POST` változón keresztül érjük el, amely egy asszociatív tömb, ezért indexeléssel (string indexeket használva) érjük el az egyes paraméterket. Például a `cim` input mező által elküldott tartalmat a `$_POST['cim']` kifejezéssel. A `create` paraméter valóban szerpelni fog, de itt nem az a fontos, hogy mi az értéke, csak az, hogy egyáltalán szerpel-e. Ez jelzi, hogy az adott gombbal küldtük el az űrlapot. Az asszociatív tömbben egy paraméter jelenlétét az `isset` függvénnyel ellenőrizzük, pl. `isset($_POST['create'])`.
+
+Amennyiben egy űrlap adatait tartalmazza a kérés, akkor kiolvassuk a megfelelő paramétereket, összeállítjuk az SQL INSERT utasítást (nem elfeledkezve az SQL injection elleni védelemről), majd elküdjük azt az adatbázisszervernek. Amennyiben új adatot szúrtunk be, ezt a `$created` segédváltozóban jelezzük. 
+
+A `books.php` oldalon, közvetlenül a cím után írjuk ki, hogy egy új könyvet beszúrtunk. Természetesen csak akkor kell megjeleníteni az üzenetet, ha a `$created` változó értéke igaz. A megjelenítéshez a [`badge`](https://getbootstrap.com/docs/4.0/components/badge/) css osztályt használjuk. 
+```html
+<h1>Könyvek</h1>
+<?php if ($created): ?>
+<p>
+    <span class="badge badge-success">Új könyv létrehozva</span>
+</p>
+<?php endif; ?>
+```
+### Keresés
+
+Még egy funkció hiányzik a könyvek főoldaláról: a keresés. Ezt következőképpen valósítjuk meg:
+* Kiteszünk egy új úrlapot, amelyben egy szöveget lehet beírni. Az űrlapban egy `search` azonosítójű gomb lesz. 
+* A `books.php` oldalon, amennyiben van `search` paramétere a kérésnek, akkor azt kiolvassuk és módosítjuk a lekérdezést, hogy csak a ilyen című könyvek szerepejenek a lekérdezésben. 
+
+Az űrlap:
+
+```html
+ <form class="form-inline" method="post">
+    <div class="card">
+        <div class="card-body">
+            Keresés: 
+            <input style="width:600px;margin-left:1em;" class="form-control" type="search" name="search" value="<?=$search?>">
+            <button class="btn btn-success" style="margin-left:1em;" type="submit" >Search</button>
+        </div>
+    </div>
+</form>
+```
+
+A lekérdezés módosítása:
+```html
+ <?php
+    $querySelect = "SELECT id, isbn, cim, szerzo, kiado, megjelenesev FROM konyv";
+    if ($search) {
+        $querySelect = $querySelect . sprintf(" WHERE LOWER(cim) LIKE '%%%s%%'", mysqli_real_escape_string($link, strtolower($search)));
+    }
+    $eredmeny = mysqli_query($link, $querySelect) or die(mysqli_error($link));
+?>
+```
+
+A végleges oldal a `books.php` fájlban található. 
