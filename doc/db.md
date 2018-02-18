@@ -1,4 +1,8 @@
-# Adatbázis létrehozása
+# Adatbázis létrehozása - hallgató segédlet
+Az alábbi leírás a könyvtáralkalmazáshoz szükséges relációs  adatabázis létrehozását mutatja be. 
+
+A teljes szkript megtalálható a `db` mappában, a `db_create.sql` fájlban. 
+
 ## Inicializálás
 ```sql
 drop database if exists konyvtar;
@@ -9,7 +13,7 @@ create database konyvtar
     
 use konyvtar;
 ```
-* Az első három utasítás törli az adatbázist, ha már létezik, így egyszerűbb újra lefuttatni a szkriptet. 
+* Az első utasítás törli az adatbázist, ha már létezik, így egyszerűbb újra lefuttatni a szkriptet. 
 * A második utasítás létrehozza az adatbázist. A magyar ékezetek használata miatt beállítjuk az UTF8 kódolást. 
 * A harmadik utasítás biztosítja, hogy a további parancsok ebben az adatbázisban legyenek végrehajtva. 
 
@@ -17,18 +21,18 @@ use konyvtar;
 
 ```sql
 create table konyv(
-id int primary key auto_increment,
+	id int primary key auto_increment,
 	isbn nvarchar(13),
-cim nvarchar(255) not null,
+	cim nvarchar(255) not null,
 	szerzo nvarchar(55),
-    	kiado nvarchar(55),
-    	megjelenesev int
+	kiado nvarchar(55),
+	megjelenesev int
 );
 ```
 
-Az adatbázisban könyvek példányait tároljuk, ezért azonos címmel és isbn számmal többször is szerpelhet egy könyv (több példány is lehet ugyanazon a könyvből). Ezért nem az isbn szám less a könyvek azonosítója. 
+Az adatbázisban könyvek példányait tároljuk, ezért azonos címmel és isbn számmal többször is szerpelhet egy könyv (több példány is lehet ugyanazon a könyvből). Ezért nem az isbn szám lesz a könyvek azonosítója. 
 
-A könyvek azonosítójának (id) a generálására az AUTO_INCREMENT opciót használjuk, aminek a MySQL automatikusan legenerálja az újonnan beszúrt könyvek azonosítóit. 
+A könyvek azonosítójának (`id`) a generálására az `AUTO_INCREMENT` opciót használjuk, amivel a MySQL automatikusan legenerálja az újonnan beszúrt könyvek azonosítóit. Ilyenkor tehát az `INSERT` utasításoknál nem kell megadni az `id` oszlop értékét. 
 
 Az alábbi kórészlet beszúr néhány teszt adatot a könyv táblába. 
 

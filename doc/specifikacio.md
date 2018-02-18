@@ -1,8 +1,9 @@
 # Könyvtáradatbázis
-Informatika 2 – minta házi feladat
+    
+    Informatika 2 – minta házi feladat
  
 # Specifikáció
-## Feladat leírása
+## Feladat informális leírása
 A feladat célja egy könyvtári kölcsönzéseket tartalmazó adatbázis karbantartása. A könyvtárban tárolni szeretnénk az elérhető könyvek listáját és a beiratkozott tagokat. Cél, hogy a kölcsönzéseket is karbantarthassuk, azok kiviteli és visszahozatali dátumával.
 
 ## Elérhető funkciók
