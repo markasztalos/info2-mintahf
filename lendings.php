@@ -115,11 +115,9 @@ if (isset($_POST['create'])) {
                         </div>
                     </div>
                     <div class="card-footer">
-                        <input class="btn btn-success" name="create" type="submit" value="Létrehozás main dátummal" />
+                        <input class="btn btn-success" name="create" type="submit" value="Létrehozás mai dátummal" />
                     </div>
                 </div>  
-
-
             </form>
 
             <?php

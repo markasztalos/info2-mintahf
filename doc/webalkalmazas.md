@@ -295,7 +295,6 @@ $link = getDb();
                         <th>Kiadó</th>      
                         <th style="white-space:nowrap;">Megjelenés éve</th>
                         <th>ISBN</th>
-                        <th></th>
                     </tr> 
                 </thead>
                 <tbody>
@@ -306,12 +305,6 @@ $link = getDb();
                         <td><?=$row['kiado']?></td>
                         <td><?=$row['megjelenesev']?></td>
                         <td><?=$row['isbn']?></td>
-                        <td>
-                            <a class="btn btn-success btn-sm" href="edit-book.php?bookid=<?=$row['id']?>">
-                                <i class="fa fa-edit"></i> Szerkesztés
-                            </a>
-                        </td>
-                        
                     </tr>                
                 <?php endwhile; ?> 
                 </tbody>
@@ -479,3 +472,314 @@ A lekérdezés módosítása:
 ```
 
 A végleges oldal a `books.php` fájlban található. 
+
+### Szerkesztés gomb
+                        <th></th>
+A könyvek táblázatában minden sor végére kiteszünk egy gombot. A gomb valójában egy link (`a` elem), ami átnavigál a megfelelő könyvet szerkesztő oldalra. Ez az oldal az `edit-book.php` lesz. Honnan tudjuk ezen az oldalon, hogy melyik könyvet szerkesztjünk? Onnan, hogy az URL-ben paraméterként átadjuk a könyv azonosítóját, pl. `edit-book.php?bookid=2`. 
+
+Az alábbi kód mutatja a módosított táblázatot. Annyi különbség van a korábbiakhoz képest, hogy megjelenik plusz egy oszlop, abban pedig egy link. A linket a `btn` és `btn-success` css osztályokkal formázzuk meg, amelyek úgy jelenítik meg, mint egy [gombot](https://getbootstrap.com/docs/4.0/components/buttons/). A linkben kiteszünk egy szerkesztést jelző ikont is. 
+```html
+ <table class="table table-striped table-sm table-bordered">
+    <thead class="thead-dark">
+        <tr>
+            <th>Cím</th>
+            <th>Szerző</th>      
+            <th>Kiadó</th>      
+            <th style="white-space:nowrap;">Megjelenés éve</th>
+            <th>ISBN</th>
+            <th></th>
+        </tr> 
+    </thead>
+    <tbody>
+    <?php while ($row = mysqli_fetch_array($eredmeny)): ?>
+        <tr>
+            <td><?=$row['cim']?></td>
+            <td><?=$row['szerzo']?></td>
+            <td><?=$row['kiado']?></td>
+            <td><?=$row['megjelenesev']?></td>
+            <td><?=$row['isbn']?></td>
+            <td>
+                <a class="btn btn-success btn-sm" href="edit-book.php?bookid=<?=$row['id']?>">
+                    <i class="fa fa-edit"></i> Szerkesztés
+                </a>
+            </td>
+        </tr>                
+    <?php endwhile; ?> 
+    </tbody>
+</table>
+```
+
+## edit-book.php
+            
+Ezen az oldalon egy úrlapot jelenítünk meg, amely a `books.php` oldalon látotthoz hasonló, azonban eleve fel van töltve a könyv aktuális adataival. Lesz továbbá egy "Mentés" gomb, amely elküldi az űrlap tartalmát. Kiteszünk mégegy gombot, amellyel törölhetjük az aktuális gombot. 
+
+```html
+<?php 
+include 'library.php';
+$link = getDb(); 
+?>
+
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="library.css">
+    <title>Könytár</title>
+</head>
+<body>
+    <?php include 'menu.html'; ?>
+    <div class="container main-content">
+        <?php
+            if (!isset($_GET['bookid'])) {
+                header("Location: books.php");
+                return;
+            } 
+            $bookid = $_GET['bookid'];
+            $query = sprintf("SELECT id, isbn, cim, szerzo, kiado, megjelenesev FROM konyv where id = %s", 
+                mysqli_real_escape_string($link, $bookid)) or die(mysqli_error($link));
+            $eredmeny = mysqli_query($link, $query);
+            $row = mysqli_fetch_array($eredmeny);
+            if (!$row) {
+                header("Location: books.php");
+                return;
+            }
+        ?>
+        <h1>Könyv adatainak módosítása</h1>
+        <form method="post" action="">
+            <input type="hidden" name="id" id="id" value="<?=$bookid?>" />
+            <div class="form-group">
+                <label for="isbn">ISBN</label>
+                <input class="form-control" name="isbn" id="isbn" type="text" value="<?=$row['isbn']?>" />
+            </div>
+            <div class="form-group">
+                <label for="cim">Cím</label>
+                <input required class="form-control" name="cim" id="cim" type="text" value="<?=$row['cim']?>" />
+            </div>
+            <div class="form-group">
+                <label for="szerzo">Szerző</label>
+                <input class="form-control" name="szerzo" id="szerzo" type="text" value="<?=$row['szerzo']?>" />
+            </div>
+             <div class="form-group">
+                <label for="kiado">Kiadó</label>
+                <input class="form-control" name="kiado" id="kiado" type="text" value="<?=$row['kiado']?>" />
+            </div>
+            <div class="form-group">
+                <label for="megjelenesev">Megjelenés éve</label>
+                <input class="form-control" name="megjelenesev" id="megjelenesev" type="number" value="<?=$row['megjelenesev']?>" />
+            </div>
+            <input class="btn btn-success" name="update" type="submit" value="Mentés" />
+            <input class="btn btn-danger" name="delete" type="submit" value="Törlés" />
+        </form>
+
+        <?php
+            closeDb($link);
+        ?>
+    </div>
+</body>
+</html>
+```
+     
+A fenti kódrészlet tehát lekérdezi az URL-ből az aktuális könyv azonosítóját, ehhez a `$_GET` asszociatív tömböt használjuk. Amennyiben az URL-ben nincsen megadva a azonosító, vagy az aktuális könyv nem létezik, akkor visszanavigálunk a `books.php` oldalra. Ehhez a következő php parancsot használjuk: 
+```
+header("Location: books.php");
+```
+
+Látható, hogy két gombot is megjelenítünk, az egyik a mentés, a másik a törlésre való. Ha a mentés gombbal küldjük el az űrlapot, akkor az `udate` paraméter lesz benne a kérésben, tehát a `$_POST` tömbben. Ha a törléssel küldtük el az űrlapot, akkor a `delete` parameter lesz elérhető. Ezek az értékek a megfelelő gomb `name` attribútumából következnek. 
+
+Az űrlapban nem csak a felhasználó számára látható beviteli mezőket jeleníthetünk meg, hanem ún. rejtett (*hidden*) mezőket is. Ez egy olyan `input` elem, aminek a `type` attribútumát `hidden`-re állítjuk, majd a `value` attribútumába megadjuk az értékét. Ezt a mezőt a felhasználó számára nem jelenítjük meg, de az űrlap elküldésekor a tartalma ugyanúgy bekerül a paraméterek közé. Jelen esetben a rejtett mezőket arra használjuk, hogy az aktuális könyv azonosítóját eltároljuk. Természetesen használhatnánk ugyanerre az URL-ben lévő azonosítót is. 
+
+Már csak az a két PHP kódrészlet hiányzik, amellyel feldolgozzuk a mentés és törlés funkciókat:
+```html
+<?php 
+include 'library.php';
+$link = getDb(); 
+//modositas
+$successful_update = false;
+if (isset($_POST['update'])) {
+    $id = mysqli_real_escape_string($link, $_POST['id']);
+    $cim = mysqli_real_escape_string($link, $_POST['cim']);
+    $szerzo = mysqli_real_escape_string($link, $_POST['szerzo']);
+    $kiado = mysqli_real_escape_string($link, $_POST['kiado']);
+    $isbn = mysqli_real_escape_string($link, $_POST['isbn']);
+    $megjelenesev = mysqli_real_escape_string($link, $_POST['megjelenesev']);
+    if (!$cim) {
+        die('A cím nem lehet üres');
+    } else {
+        $query = sprintf("UPDATE konyv SET cim='%s', szerzo='%s', kiado='%s', isbn='%s', megjelenesev=%s WHERE id=%s",
+                $cim, $szerzo, $kiado, $isbn, $megjelenesev, $id);
+
+        mysqli_query($link, $query) or die(mysqli_error($link));
+        $successful_update = true;
+    }
+
+} else if (isset($_POST['delete'])) {
+    $query1 = sprintf('DELETE FROM kolcsonzes WHERE konyvid = %s', 
+        mysqli_real_escape_string($link, $_POST['id']));
+    $query2 = sprintf('DELETE FROM konyv WHERE id = %s', 
+        mysqli_real_escape_string($link, $_POST['id']));
+    $ret1 = mysqli_query($link, $query1) or die(mysqli_error($link));
+    $ret2 = mysqli_query($link, $query2) or die(mysqli_error($link));
+    header("Location: books.php");
+    return;
+}
+?>
+```
+## Tagok listázása és szerkesztése 
+
+A `members.php` oldal pontosan ugyanolyan módon működik, mint a `books.php`, csak itt nincsen keresés és a tagokat eleve abc szerinti sorrenben listázzuk ki. Az `edit-member.php` szintén az `edit-book.php` analógiájára készült. 
+
+## Kölcsönzések
+
+Kicsit speciálisabb a kölcsönzések oldala:
+* Itt is megjelenítjük egy táblázatban a kölcsönzéseket.
+* Azoknál a kölcsönzéseknél, amelyeket még nem hoztak vissza, minden sorba kiteszünk egy "Visszahozatal mai dátummal" gombot. Ennek célja, hogy az aktuális kölcsönzést egyből módosítjuk és a mai dátummal visszahozzuk a könyvet. Értelemszerűen azoknál a kölcsönzéseknl, amelyeket már visszahoztak, erre a gombra nincs szükség. 
+* Megjelenítünk minden sorban egy törlés gombot, amellyel közvetlenül lehet törölni az aktuális kölcsönzést. 
+* Végezetül kiteszünk egy szerkesztés gombot, azonban csak azokhoz a kölcsönzésekhez, amelyeket még nem hoztunk vissza. A már lezárt kölcsönzéseket csak törölni lehet.
+
+Minden műveletet az `edit-lending.php` fog végrehajtani, amelynek paraméterül átadjuk az aktuális kölcsönzés azonosítóját. Tehát például a 2-es kölcsönzés szerkesztését a következő linkek végezetjük el: 
+```
+edit-lending.php?lendingid=2
+```
+Amennyiben törölni akarjuk, akkor még a delete paramétert is beletesszük az URL-be:
+```
+edit-lending.php?lendingid=2&delete
+```
+Végül volt egy gomb, amivel az aktuális dátummal visszahozzuk a kölcsönzést, ennek URL-je így néz ki: 
+```
+edit-lending.php?lendingid=2&returnCurrentDate
+```
+
+Először nézzük a kölcsönzések listáját és a megfelelő gombok kirajzolását. 
+```html
+<?php
+    $query = "SELECT kolcsonzes.id, tagid, kivitel, konyvid, kivitel, vissza, tag.nev as tagnev, konyv.cim as cim FROM kolcsonzes INNER JOIN tag ON tag.id = tagid INNER JOIN konyv ON konyvid=konyv.id";
+    $eredmeny = mysqli_query($link, $query) or die(mysqli_error($link));
+?>
+
+<table class="table table-striped table-sm table-bordered">
+    <thead class="thead-dark">
+        <tr>
+            <th>Tag</th>
+            <th>Könyv</th>      
+            <th style="white-space:nowrap;">Kivitel</th>      
+            <th style="white-space:nowrap;">Visszahozatal</th>
+            <th></th>
+            <th></th>
+        </tr> 
+    </thead>
+    <tbody>
+    <?php while ($row = mysqli_fetch_array($eredmeny)): ?>
+        <tr>
+            <td><?=$row['tagnev']?></td>
+            <td><?=$row['cim']?></td>
+            <td>
+                <?=$row['kivitel']?>
+            </td>
+            <td>
+                <?php if ($row['vissza']): ?>
+                    <?=$row['vissza']?>
+                <?php else: ?>
+                    <a class="btn btn-success btn-sm" href="edit-lending.php?lendingid=<?=$row['id']?>&returnCurrentDate">
+                        <i class="fa fa-calendar"></i> Vissza mai dátummal
+                    </a>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if (!$row['vissza']): ?>
+                <a class="btn btn-success btn-sm" href="edit-lending.php?lendingid=<?=$row['id']?>">
+                    <i class="fa fa-edit"></i>
+                </a>
+                <?php endif; ?>
+            </td>
+            <td>
+            <a class="btn btn-danger btn-sm" href="edit-lending.php?lendingid=<?=$row['id']?>&delete">
+                    <i class="fa fa-trash"></i>
+                </a>
+            </td>
+        </tr>                
+    <?php endwhile; ?>  
+    </tbody>
+</table>
+``` 
+
+Szintén speciális a megjelenített űrlap. Egy kölcsönzéshez ki kell választani egy könyvet és egy tagot. Természetesen megadhatnánk az adott könyv és tag azonosítóját, de ez nem lenne túl felhasználóbarát. Ráadásul tudnunk kellene, hogy melyik könyvek vannak éppen kikölcsönözve. Egy egyszerű és felhasználóbarát megoldás, hogy legördülő listát biztosítunk. Vagyis felsoroljuk a lehetséges tagokat és a lehetséges könyveket. 
+
+![](lendings.png)
+
+Erre a `select` elemet használjuk. A `select`nek is megadunk egy `name` attribútumot, így a kiválasztott érték itt is bekerül majd az űrlap adatai közé. A lehetséges értékeket `option` elemek jelzik. Minden könyvnél az adott könyv címét fogjuk megjeleníteni, azonban azt szeretnénk, hogy ha kiválasztunk egy címet, akkor az aktuális érték ne a cím, hanem a könyv azonosítója legyen, hiszen arra lesz majd szükség az új kölcsönzés létrehozásánál. Erre az `option` elem `value` attribútumát használjuk. Figyeljünk arra is, hogy a lekérdezésnél eleve csak azokat a könyveket választjuk ki, amelyekhez nincsen aktív kölcsönzés. 
+
+Hasonló módon működik a tagok listázása. 
+
+
+```html
+<form method="post">
+    <div class="card">
+        <div class="card-header">
+            Új kölcsönzés
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label for='tagid'>Tag</label>
+                <select class="form-control" name='tagid' id='tagid'>
+                <?php
+                    $queryMembers = 'SELECT id, nev FROM tag';
+                    $resultQueryMembers = mysqli_query($link, $queryMembers) or die(mysqli_error($link));
+                    while ($rowMember = mysqli_fetch_array($resultQueryMembers)):
+                ?>
+                    <option value="<?=$rowMember['id']?>"><?=$rowMember['nev']?></option>
+                <?php endwhile; ?>
+                </select>
+            </div>
+
+                <div class="form-group">
+                <label for='konyvid'>Könyv</label>
+                <select class="form-control" name='konyvid' id='konyvid'>
+                <?php
+                    $queryBooks = 'SELECT id, cim, isbn FROM konyv WHERE id NOT IN (SELECT konyvid FROM kolcsonzes WHERE vissza IS NULL)';
+                    $resultQueryBooks = mysqli_query($link, $queryBooks) or die(mysqli_error($link));
+                    while ($rowBook = mysqli_fetch_array($resultQueryBooks)):
+                ?>
+                    <option value="<?=$rowBook['id']?>"><?=$rowBook['cim']?> (<?=$rowBook['isbn']?>)</option>
+                <?php endwhile; ?>
+                </select>
+            </div>
+        </div>
+        <div class="card-footer">
+            <input class="btn btn-success" name="create" type="submit" value="Létrehozás mai dátummal" />
+        </div>
+    </div>  
+</form>
+```
+
+A fenti kód eredményekképpen tehát az elküldött kérésbe a `konyvid` és `tagid` paraméterek is bekerülnek, mert ezeket adtuk meg a `select` elemek `name` attribútumában. 
+
+A kivitel dátumát nem adjuk meg külön, amikor létrehozzuk az új kölcsönzést, a mai dátumot használjuk majd. A létrehozás gomb megnyomását úgy tudjuk majd ellenőrizni, hogy a `create` paraméter be lesz állítva a HTTP kérésben. 
+
+Végezetül nézzük a létrehozást intéző PHP kódrészletet:
+```html
+<?php
+include 'library.php';
+$link = getDb(); 
+
+$create = false;
+if (isset($_POST['create'])) {
+    $tagid = mysqli_real_escape_string($link, $_POST['tagid']);
+    $konyvid = mysqli_real_escape_string($link, $_POST['konyvid']);
+    $query = sprintf("INSERT INTO kolcsonzes (tagid, konyvid, kivitel) VALUES (%s, %s, curdate())", $tagid, $konyvid);
+    mysqli_query($link, $query) or die(mysqli_error($link));
+    $create = true;
+}
+?>
+```
+
+### Kölcsönzések szerkesztése
+
+Utolsó lépés a kölcsönzéseket szerkesztő oldal, vagyis az `edit-lending.php`. Ez hasonlóan működik, mint a korábbi szerkesztő oldalak. 
+* Ugyanúgy megjelenítünk egy űrlapot, amelyen szerkeszthetők az egyes mezők. A dátumok szerkesztésére `date` típusú `input` mezőket használunk majd. 
+* Az aktutális adatok lekérdezésénél nem csak a tag és könyv azonostókat, hanem a kapcsolódó könyv címet és tag nevét is lekérdezzük és ezt jelenítjük meg.
+* A kapcsolódó könyvet és tagot, továbbá a kiviteli dátumot nem engedjük módosítani (`readonly` attribútum a megfelelő `input` elemeken). 
+* Az oldal elején lévő php szkriptben nem csak a törlést és lérehozást kell kezelni, hanem a korábbi oldalon leírt "visszahozás mai dátummal" paramétert is. 
+
+A teljes oldal kódja megtalálható az `edit-lending.php` oldalon. 
+
+
+
